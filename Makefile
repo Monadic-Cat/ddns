@@ -1,44 +1,56 @@
+# This Makefile depends on GNU Make of at least version 3.80, for order-only dependencies.
+
 # Recursive wildcard function.
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 # Rust source code.
 RS_SOURCES=Cargo.toml Cargo.lock .cargo/config.toml rust-toolchain.toml $(call rwildcard,src,*.rs)
 
+OUT=build
+
 .PHONY:
 run: ddns
-	sudo chroot mipsel $(shell pwd)/ddns
+	sudo chroot "$(OUT)/mipsel" "$(shell pwd)/$(OUT)/ddns"
 
-ddns: lmips .mipsel ${RS_SOURCES}
-	cargo build
-	cp target/mipsel-unknown-linux-uclibc/debug/ddns ddns
+ddns: $(OUT)/lmips $(OUT)/.mipsel ${RS_SOURCES}
+	OUT="$(OUT)" cargo build
+	cp target/mipsel-unknown-linux-uclibc/debug/ddns "$(OUT)/ddns"
 
-lmips: lmips.c
-	cc lmips.c -o lmips
+$(OUT)/lmips: lmips.c
+	cc lmips.c -o "$(OUT)/lmips"
 
 # We use an empty file to express readiness of the mipsel chroot.
-.mipsel: root_fs_mipsel.ext2
-	mkdir -p mipsel
-	sh ensure_chroot.sh
-	touch .mipsel
+$(OUT)/.mipsel: $(OUT)/root_fs_mipsel.ext2 | $(OUT)/mipsel
+	OUT="$(OUT)" sh ensure_chroot.sh
+	touch "$(OUT)/.mipsel"
 
 # Resize the toolchain FS image so it has room to put stuff in it.
-root_fs_mipsel.ext2: root_fs_mipsel.ext2.bz2
-	unar root_fs_mipsel.ext2.bz2
-	e2fsck -f -p root_fs_mipsel.ext2
-	resize2fs root_fs_mipsel.ext2 200M
+$(OUT)/root_fs_mipsel.ext2: $(OUT)/cache/root_fs_mipsel.ext2.bz2
+	unar "$(OUT)/cache/root_fs_mipsel.ext2.bz2" -o "$(OUT)/"
+	e2fsck -f -p "$(OUT)/root_fs_mipsel.ext2"
+	resize2fs "$(OUT)/root_fs_mipsel.ext2" 200M
 
 # Download the cross compiler toolchain root FS image from the uClibc site.
-root_fs_mipsel.ext2.bz2:
-	curl --remote-name "https://uclibc.org/downloads/old-releases/root_fs_mipsel.ext2.bz2"
+$(OUT)/cache/root_fs_mipsel.ext2.bz2: | $(OUT)
+	cd "$(OUT)/cache" && curl --remote-name "https://uclibc.org/downloads/old-releases/root_fs_mipsel.ext2.bz2"
+
+$(OUT):
+	mkdir -p $(OUT)
+$(OUT)/cache:
+	mkdir -p $(OUT)/cache
+$(OUT)/mipsel:
+	mkdir -p $(OUT)/mipsel
 
 # We don't delete the compressed FS image upon cleaning, since
 # it never changes, and I'm not confident in that site's availability.
 .PHONY:
 clean:
-	rm -f root_fs_mipsel.ext2
-	rm -f lmips
+	rm -f "$(OUT)/root_fs_mipsel.ext2"
+	rm -f "$(OUT)/lmips"
+	rm -f "$(OUT)/ddns"
 
 # Cleanup the mipsel chroot as well as the other things.
 .PHONY:
 clean-sudo: clean
-	sudo umount -l mipsel/
-	rm .mipsel
+	sudo umount -l "$(OUT)/mipsel/"
+	rm -f "$(OUT)/.mipsel"
+	rm -fd "$(OUT)/mipsel"

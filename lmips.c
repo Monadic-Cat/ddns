@@ -13,11 +13,19 @@ int main(int argc, char** argv) {
       printf("%s: expected linker arguments\n", argv[0]);
       exit(1);
    }
+   char* out_dir = getenv("OUT");
+   size_t out_dir_len = strlen(out_dir);
+   size_t mount_dir_len = out_dir_len + strlen("/mipsel/");
+   /* Allocate enough space for the string and a null terminator. */
+   char* mount_dir = malloc((mount_dir_len + 1) * sizeof(char));
+   strcpy(mount_dir, out_dir);
+   strcat(mount_dir + out_dir_len, "/mipsel/");
+   mount_dir[mount_dir_len] = '\0';
    /* We need space for adding up to 2 arguments to the front, plus 1 null at the end. */
    /* Ignore the possibility of overflow here, since we assume Cargo to not be malicious. */
    char** child_argv = malloc((argc + 3) * sizeof(char*));
    child_argv[0] = "chroot";
-   child_argv[1] = "mipsel/";
+   child_argv[1] = mount_dir;
    child_argv[2] = "gcc";
    int out_idx = 3;
    /* Skip the 0th argument, since that's the name we were invoked with,

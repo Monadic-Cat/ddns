@@ -2,8 +2,8 @@
 # echo "Linker args: $@" >> /dev/pts/4
 
 # Ensure `lmips` binary exists, and mipsel chroot is ready.
-make lmips .mipsel
+make "$OUT/lmips" "$OUT/.mipsel"
 
 # Run `lmips` binary with required permissions
 # and pass through linker arguments.
-sudo ./lmips $@
+sudo OUT="$OUT" "$OUT/lmips" $@

@@ -1,0 +1,13 @@
+#!/bin/sh
+# A runner wrapper for `cargo run` to invoke on the end binary.
+
+if [ -z "$OUT" ] ; then
+    OUT="build"
+fi
+
+# Ensure the mipsel chroot is ready.
+make "$OUT/.mipsel"
+
+CMD="$1"
+shift
+sudo chroot "$OUT/mipsel" "$(pwd)/$CMD" $@

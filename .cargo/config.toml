@@ -4,6 +4,7 @@ target = "mipsel-unknown-linux-uclibc"
 [target.mipsel-unknown-linux-uclibc]
 linker = "./cc-mips"
 # linker = "rust-lld"
+runner = "./run-mips"
 
 [unstable]
 build-std = ["core", "compiler_builtins"]

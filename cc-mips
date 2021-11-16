@@ -1,6 +1,10 @@
 #!/bin/sh
 # echo "Linker args: $@" >> /dev/pts/4
 
+if [ -z "$OUT" ] ; then
+    OUT="build"
+fi
+
 # Ensure `lmips` binary exists, and mipsel chroot is ready.
 make "$OUT/lmips" "$OUT/.mipsel"
 

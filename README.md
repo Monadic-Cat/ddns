@@ -1,8 +1,10 @@
 # DDNS
-A hacky program for doing dynamic DNS with Cloudflare's API,
+Going to be a hacky program for doing dynamic DNS with Cloudflare's API,
 on my home router, which is an old MIPS machine.
 
-# Downloads
+Initial work is just on getting Rust working on it.
+
+# External Dependencies Downloaded
 - https://uclibc.org/downloads/old-releases/root_fs_mipsel.ext2.bz2
 
 # Dirty Hacks
